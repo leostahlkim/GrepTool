@@ -1,0 +1,158 @@
+/**********************************************************
+* README
+* Written by: Leo Kim
+* Date: 4/10/22
+*********************************************************/
+
+
+GERP - Leo Kim
+
+
+B) The purpose of this program is to sort through files, namely books, 
+and find every instance of a specific word(s), determined by a user's
+input. After all of the files are processed and the user input is gathered,
+the location, including directory, subdirectory, and file, along with the 
+word's line number, of every one of the user inputted word's appearances
+are sent to an output file. The user can also determine if they wish to
+consider sensitive cases of their word, or if they should be ignored 
+(e.x. if “Hello” should be considered for the user’s word “hello”).
+
+
+
+C) Acknowledgments
+https://stackoverflow.com/questions/12447325/
+dividing-two-integers-to-produce-a-float-result
+
+
+
+
+D) 
+    searchDir.h
+        Interface of the searchDir class
+    searchDir.cpp
+        Implementation of the searchDir class.
+        Purpose is to read in and process files
+        and the paths to the files. Also contains
+        the main driver/command loop of the code,
+        which processes the user's commands and determines
+        whether to search for sensitive words or not,
+        for example ("hello" vs "Hello"). 
+    main.cpp
+        Collects the user's arguments from the command line
+        and creates an instance of a searchDir in order
+        to process the user's commands from the command line
+    wordHash.h
+        Interface of the wordHash class
+    wordHash.cpp
+        Implementation of the wordHash class.
+        Handles everything with the hash table,
+        including the creation of it, hashing items,
+        inserting items, and expanding the hash table.
+    wordSensitive.h
+        Interface of the wordSensitive class
+    wordSensitive.cpp
+        Implementation of the wordSensitive class.
+        The wordSensitive class stores a word and both its case sensitive
+        and case insensitive appearances.
+    a.txt
+        Output file used for diff testing with the reference implementation.
+    a1.txt
+        Output file used for diff testing with the reference implementation.
+    testMain.cpp
+        Ran gerp on a specific file (largeGutenberg, for example).
+        Was used before the query was implemented, and was specifically
+        used to measure time efficiency for the specific Gutenberg file
+        sizes (tiny, small, medium, large)
+    unit_tests.h
+        Includes some early-on testing for the hash table's
+        insert, contains, and expand functions to ensure that 
+        the hash table itself was implemented correctly.
+    test.txt
+        Test text file with some words.
+    Makefile:
+        Contains the recipies to link and construct an exectuable
+
+E) Compile the program by using the make file, meaning typing 'make gerp'
+    Once the executable is constructed, you can run gerp by following:
+    ./gerp inputDirectory outputFile
+
+F) We create a wordSensitive instance that holds the location of a particular
+   word, as well as the word itself. Then, the wordSensitive has two vectors,
+   an appearances vector, and an insensitive appearances vector. Each time a
+   word appears in the same form as the original word ("hello" appears twice),
+   then it is LOCATION is added to the appearances vector. This allows us to
+   access all of the locations after processing the files, and then use 
+   those locations to push them to the output file. Each time a word appears
+   in a DIFFERENT form as the original word ("hello" and "Hello") its 
+   LOCATION is added to the insAppearances vector, which simply stores the
+   LOCATIONS of all of the insensitive appearences of the word. These
+   locations are accessed if the user requsts an insensitive search using
+   the @i command, and are pushed to the output file if necessary. The way
+   we figure out of a word has appeared before and therefore should be put
+   into the appearences vector is by using a hash table. Each word from each
+   file is read and then hashed. If the location already has an instance
+   of a wordSensitive, that implies that the same word had been previously
+   hashed. In this case, the word is then added to the appropriate 
+   appearences vector. In order to prevent a duplicate of the same word 
+   at the SAME location, the word is checked with the latest entry to
+   the appearences vector to ensure that they are not the identical
+   wordSensitive. This works becausee words are added in order to the
+   appearences vector based on their location in the line and file.
+   All the file lines and file paths are saved in a large vector that is
+   accessed when the user searches for word occurences A file's path
+   is found and saved using FSTree and DirNode. 
+   
+
+G) In the wordSensitive class we used two array lists to store both
+   a word's case sensitive appearances and its case insensitive appearances.
+   We decided to use an array list because we needed to be able to add to the
+   back of these lists and access items by index in the lists, which are both
+   O(1) complexity for array lists (not including expansion).
+
+   FSTreeTraversal used an n-ary tree, since the number of chilren
+   each node had was not necessarily limited to two. 
+
+   In wordHash, we used a hash table with the standard hash function.
+   This is specifically advantageous for this program because it allows
+   for quick insertion (time complexity O(1)) and can quickly find an 
+   element (time compexity O(1)). Therefore, since thousands of items
+   will be processed and added to a data structure, it was useful to use
+   one that could do that in constant time. When expanding, however, hash
+   tables have a time complexity of O(n). While not ideal, the size
+   of a hash table increases expoentially, meaning that the amount
+   of times expand is called is not proportional to the amount of elements
+   added. Therefore, in this scenario, a constant time insert is much
+   more efficient.
+
+   In the searchDir class we also stored an array list of all of the file
+   lines read in and their access pathways. Once again, we decided to use an
+   array list because we needed to be able to add to the back of these lists
+   and access items by index in the lists, which are both
+   O(1) complexity for array lists (not including expansion).
+
+H) We used many methods for testing. For the stringProcessing and FSTree
+   week 1 implementations, we mainly used unit_testing and testing mains. 
+   For the implementation of the hash table, we mainly used unit_testing
+   to ensure that the basic insert, expand, etc, were functioning properly. 
+   Once we had the most basic version of the hash table completed, we created
+   testMain, which ran our code on a specific file and did not need a query
+   loop or user input. First, the code was run on tinyData, then smallGutenberg
+   etc. In the code itself, we printed the line number every time a line was
+   processed so that we could see how many lines were processed in how much
+   time. This allowed us to effectively time and keep track of our time
+   efficiency and make adjustments accordingly. For example, at first, 
+   we were checking every single element in the appearences vector to
+   see if the item we were trying to insert was a duplicate or not. 
+   However, after realizing our program was too slow, we found that 
+   it was much faster to just check the last spot in the vector,
+   since the words and their indecies are addded sequentially.
+   This drastically decreased the time needed to run our code in
+   medium and large Gutenberg, since the check for duplicates
+   was now O(1) and not O(n). Finally, once adjustments were
+   made and query loops and output files were added, we ran
+   our code against the reference implementation using diff
+   testing. We intensively tested against the reference
+   implementation by inputting words such as "$$%%##"
+   which should be completely stripped, and others like
+   "#comp-13#@!#" and "@i #)#comp--123" to ensure
+   that the intensive search was also functioning correctly.
